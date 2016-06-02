@@ -6,10 +6,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/yosisa/webutil"
 )
 
 const namespace = "lmq"
@@ -181,9 +183,10 @@ func main() {
 	c := newLMQCollector(*lmqUri, *minInterval)
 	prometheus.MustRegister(c)
 	http.Handle(*metricsPath, prometheus.Handler())
+	h := webutil.Recoverer(http.DefaultServeMux, os.Stderr)
 
 	log.Printf("Starting lmq_exporter at %s", *listenAddress)
-	if err := http.ListenAndServe(*listenAddress, nil); err != nil {
+	if err := http.ListenAndServe(*listenAddress, h); err != nil {
 		log.Fatal(err)
 	}
 }
